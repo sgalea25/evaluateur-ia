@@ -1,0 +1,5 @@
+{
+  "name": "Eval.fr - AI Project Evaluator",
+  "description": "An AI-powered tool to analyze development projects according to OECD-DAC criteria: relevance, coherence, effectiveness, efficiency, and impact.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/evaluateur", "destination": "/index.html" },
+    { "source": "/evaluateur/(.*)", "destination": "/index.html" }
+  ]
+}
