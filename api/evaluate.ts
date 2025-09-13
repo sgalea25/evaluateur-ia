@@ -12,7 +12,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   try {
-    const { projectDescription } = await request.json();
+    const { projectDescription } = request.body;
     if (!projectDescription) {
         return new Response(JSON.stringify({ error: 'Project description is required.' }), { status: 400 });
     }
