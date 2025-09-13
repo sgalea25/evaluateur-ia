@@ -76,6 +76,8 @@ export default async function handler(request: Request): Promise<Response> {
                 responseMimeType: "application/json",
                 responseSchema: evaluationSchema,
                 temperature: 0.2,
+                // OPTIMIZATION: Tell the model to respond faster to avoid timeouts.
+                thinkingConfig: { thinkingBudget: 0 }
             },
         });
 
