@@ -20,7 +20,7 @@ export default async function handler(request: Request): Promise<Response> {
     const genAI = new GoogleGenAI(process.env.API_KEY);
     const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
-    const prompt = `Evaluez la description de projet suivante...`; // NOTE: Assurez-vous de mettre votre prompt complet ici
+    const prompt = `const prompt = `Analyse cette description de projet et évalue-la selon les critères OCDE (Pertinence, Cohérence, Efficacité, Efficience, Impact). Pour chaque critère, donne un score sur 100, 2 points forts, et 2 points faibles. Fournis un score global et un résumé. Réponds uniquement en JSON structuré comme demandé. Voici le projet : --- ${projectDescription}`;`; // NOTE: Assurez-vous de mettre votre prompt complet ici
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
