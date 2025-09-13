@@ -1,46 +1,104 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
+import { GEMINI_MODEL } from '../constants';
+import type { EvaluationReport } from '../types';
 
-const GEMINI_MODEL = 'gemini-1.5-flash';
+// This tells Vercel to run this code efficiently
+export const config = {
+  runtime: 'edge',
+};
 
-export default async function handler(request: any, response: any) {
-  if (request.method !== 'POST') {
-    return response.status(405).send('Method Not Allowed');
-  }
+const evaluationMetricSchema = {
+    type: Type.OBJECT,
+    properties: {
+        score: { type: Type.INTEGER, description: "Score from 0 to 100 for this criterion." },
+        strengths: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of 2-4 key strengths." },
+        weaknesses: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of 2-4 key weaknesses as actionable recommendations." },
+    },
+    required: ["score", "strengths", "weaknesses"]
+};
 
-  if (!process.env.API_KEY) {
-    return response.status(500).json({ error: 'API_KEY environment variable not set.' });
-  }
+const evaluationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        overallScore: { type: Type.INTEGER, description: "Overall project score from 0 to 100, as an average of the five criteria scores." },
+        summary: { type: Type.STRING, description: "A brief, one-paragraph executive summary of the project's evaluation." },
+        relevance: { ...evaluationMetricSchema, description: "Evaluation of the project's Relevance." },
+        coherence: { ...evaluationMetricSchema, description: "Evaluation of the project's Coherence." },
+        effectiveness: { ...evaluationMetricSchema, description: "Evaluation of the project's Effectiveness." },
+        efficiency: { ...evaluationMetricSchema, description: "Evaluation of the project's Efficiency." },
+        impact: { ...evaluationMetricSchema, description: "Evaluation of the project's potential Impact." },
+    },
+    required: ["overallScore", "summary", "relevance", "coherence", "effectiveness", "efficiency", "impact"]
+};
 
-  try {
-    const { projectDescription } = request.body;
-    if (!projectDescription) {
-        return response.status(400).json({ error: 'Project description is required.' });
+// The main function that handles requests
+export default async function handler(request: Request): Promise<Response> {
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (request.method !== 'POST') {
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers });
     }
 
-    // CORRECTION DÉFINITIVE 1 : On passe la clé dans un objet
-    const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!process.env.API_KEY) {
+        console.error("API_KEY is not configured on the server.");
+        return new Response(JSON.stringify({ error: 'Server configuration error: API key is missing.' }), { status: 500, headers });
+    }
 
-    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    try {
+        const { projectDescription } = await request.json();
+        if (!projectDescription || typeof projectDescription !== 'string') {
+            return new Response(JSON.stringify({ error: 'Project description is required and must be a string.' }), { status: 400, headers });
+        }
 
-    const prompt = `Analyse cette description de projet et évalue-la selon les critères OCDE (Pertinence, Cohérence, Efficacité, Efficience, Impact). Pour chaque critère, donne un score sur 100, 2 points forts, et 2 points faibles. Fournis un score global et un résumé. Réponds uniquement en JSON structuré comme demandé. Voici le projet : --- ${projectDescription}`;
+        // Initialize the AI client with the correct, modern syntax
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        
+        const prompt = `
+        You are an expert evaluator for international development and aid projects, specializing in the OECD-DAC criteria.
+        Your task is to analyze the provided project description and evaluate it based on five core criteria: Relevance, Coherence, Effectiveness, Efficiency, and Impact.
+        Analyze the following project description:
+        ---
+        ${projectDescription}
+        ---
+        Provide a comprehensive evaluation. For each of the five criteria, you must provide:
+        1. A score from 0 to 100.
+        2. A list of 2-4 key strengths.
+        3. A list of 2-4 key weaknesses, phrased as constructive, actionable recommendations for improvement.
+        Also, provide an overall score (as an average of the five criteria scores) and a brief executive summary of your findings.
+        Structure your entire response according to the provided JSON schema. Ensure your analysis is based solely on the text provided.
+        `;
 
-    // CORRECTION DÉFINITIVE 2 : On utilise la bonne méthode d'appel
-    const result = await model.generateContent(prompt);
-    const resultResponse = await result.response;
-    const rawText = resultResponse.text();
+        // This is the correct, modern API call
+        const geminiResponse = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: evaluationSchema,
+                temperature: 0.2,
+            },
+        });
 
-    // Bloc pour extraire le JSON proprement
-    const startIndex = rawText.indexOf('{');
-    const endIndex = rawText.lastIndexOf('}') + 1;
-    const jsonText = rawText.substring(startIndex, endIndex);
+        const jsonText = geminiResponse.text.trim();
+        
+        // Final check to ensure the response is valid JSON before parsing
+        if (!jsonText.startsWith('{') && !jsonText.startsWith('[') ) {
+          console.error("Received non-JSON response from AI:", jsonText);
+          throw new Error("The AI model returned an invalid format.");
+        }
+        
+        const report: EvaluationReport = JSON.parse(jsonText);
 
-    const report = JSON.parse(jsonText);
+        return new Response(JSON.stringify(report), {
+            status: 200,
+            headers: headers,
+        });
 
-    return response.status(200).json(report);
-
-  } catch (error) {
-    console.error("Error in /api/evaluate:", error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-    return response.status(500).json({ error: `AI model evaluation failed: ${errorMessage}` });
-  }
+    } catch (error)
+    {
+        console.error("Critical error in /api/evaluate:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        // This is the message that will be shown to the user in the error UI
+        return new Response(JSON.stringify({ error: `AI model evaluation failed. Details: ${errorMessage}` }), { status: 500, headers: headers });
+    }
 }
