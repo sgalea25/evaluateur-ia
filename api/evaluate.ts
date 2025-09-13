@@ -17,7 +17,10 @@ export default async function handler(request: any, response: any) {
         return response.status(400).json({ error: 'Project description is required.' });
     }
 
+    // CORRECTION 1: L'initialisation se fait avec un objet
     const genAI = new GoogleGenAI(process.env.API_KEY);
+
+    // CORRECTION 2: On utilise la méthode "generateContent" directement
     const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
     const prompt = `Analyse cette description de projet et évalue-la selon les critères OCDE (Pertinence, Cohérence, Efficacité, Efficience, Impact). Pour chaque critère, donne un score sur 100, 2 points forts, et 2 points faibles. Fournis un score global et un résumé. Réponds uniquement en JSON structuré comme demandé. Voici le projet : --- ${projectDescription}`;
@@ -26,11 +29,9 @@ export default async function handler(request: any, response: any) {
     const resultResponse = await result.response;
     const rawText = resultResponse.text();
 
-    // --- BLOC DE NETTOYAGE POUR EXTRAIRE LE JSON ---
     const startIndex = rawText.indexOf('{');
     const endIndex = rawText.lastIndexOf('}') + 1;
     const jsonText = rawText.substring(startIndex, endIndex);
-    // --- FIN DU BLOC DE NETTOYAGE ---
 
     const report = JSON.parse(jsonText);
 
