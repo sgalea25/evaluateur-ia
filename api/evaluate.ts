@@ -20,7 +20,7 @@ const evaluationMetricSchema = {
 const evaluationSchema = {
     type: Type.OBJECT,
     properties: {
-        overallScore: { type: Type.INTEGER, description: "Overall project score from 0 to 100, as an average of the five criteria scores." },
+        overallScore: { type: Type.INTEGER, description: "Overall project score from 0 to 100, as an average of the six criteria scores." },
         summary: { type: Type.STRING, description: "A brief, one-paragraph executive summary of the project's evaluation." },
         relevance: { ...evaluationMetricSchema, description: "Evaluation of the project's Relevance." },
         coherence: { ...evaluationMetricSchema, description: "Evaluation of the project's Coherence." },
@@ -57,18 +57,18 @@ export default async function handler(request: Request): Promise<Response> {
         
         const prompt = `
         You are an expert evaluator for international development and aid projects, specializing in the OECD-DAC criteria.
-        Your task is to analyze the provided project description and evaluate it based on five core criteria: Relevance, Coherence, Effectiveness, Efficiency, and Impact.
+        Your task is to analyze the provided project description and evaluate it based on six core criteria: Relevance, Coherence, Effectiveness, Efficiency, and Impact. Also evaluate Sustainability: the extent to which the net benefits of the project continue, or are likely to continue, after it ends (financial, institutional, social, environmental capacities).
         
         Analyze the following project description:
         ---
         ${projectDescription}
         ---
         
-        Provide a comprehensive evaluation. For each of the five criteria, you must provide:
+        Provide a comprehensive evaluation. For each of the six criteria, you must provide:
         1. A score from 0 to 100.
         2. A list of 2-4 key strengths.
         3. A list of 2-4 key weaknesses, phrased as constructive, actionable recommendations for improvement.
-        Also, provide an overall score (as an average of the five criteria scores) and a brief executive summary of your findings.
+        Also, provide an overall score (as an average of the six criteria scores) and a brief executive summary of your findings.
         
         Structure your entire response according to the provided JSON schema. Ensure your analysis is based solely on the text provided.
         
