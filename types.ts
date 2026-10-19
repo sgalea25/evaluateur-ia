@@ -12,4 +12,5 @@ export interface EvaluationReport {
   effectiveness: EvaluationMetric;
   efficiency: EvaluationMetric;
   impact: EvaluationMetric;
+  sustainability: EvaluationMetric;
 }
