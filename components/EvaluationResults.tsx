@@ -2,7 +2,7 @@ import React from 'react';
 import type { EvaluationReport, EvaluationMetric } from '../types';
 import { ScoreCard } from './ScoreCard';
 import { RecommendationItem } from './RecommendationItem';
-import { RelevanceIcon, CoherenceIcon, EffectivenessIcon, EfficiencyIcon, ImpactIcon } from './icons';
+import { RelevanceIcon, CoherenceIcon, EffectivenessIcon, EfficiencyIcon, ImpactIcon, SustainabilityIcon } from './icons';
 
 interface EvaluationResultsProps {
   report: EvaluationReport;
@@ -38,7 +38,7 @@ const MetricDetailCard: React.FC<{ title: string; metric: EvaluationMetric; icon
 );
 
 export const EvaluationResults: React.FC<EvaluationResultsProps> = ({ report, title, onReset }) => {
-  const { overallScore, summary, relevance, coherence, effectiveness, efficiency, impact } = report;
+  const { overallScore, summary, relevance, coherence, effectiveness, efficiency, impact, sustainability } = report;
 
   const metrics = [
     { id: 'relevance', title: 'Relevance', metric: relevance, icon: <RelevanceIcon className="w-8 h-8 text-cyan-400" /> },
@@ -46,6 +46,7 @@ export const EvaluationResults: React.FC<EvaluationResultsProps> = ({ report, ti
     { id: 'effectiveness', title: 'Effectiveness', metric: effectiveness, icon: <EffectivenessIcon className="w-8 h-8 text-cyan-400" /> },
     { id: 'efficiency', title: 'Efficiency', metric: efficiency, icon: <EfficiencyIcon className="w-8 h-8 text-cyan-400" /> },
     { id: 'impact', title: 'Impact', metric: impact, icon: <ImpactIcon className="w-8 h-8 text-cyan-400" /> },
+     { id: 'sustainability', title: 'Sustainability', metric: sustainability, icon: <SustainabilityIcon className="w-8 h-8 text-cyan-400" /> },
   ];
 
   return (
@@ -59,7 +60,7 @@ export const EvaluationResults: React.FC<EvaluationResultsProps> = ({ report, ti
         <ScoreCard score={overallScore} title="Overall Score" size="large" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6 mb-8">
         {metrics.map(({ id, title, metric, icon }) => (
             <ScoreCard key={id} score={metric.score} title={title} icon={icon} />
         ))}
