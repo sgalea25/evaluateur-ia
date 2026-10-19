@@ -27,8 +27,10 @@ const evaluationSchema = {
         effectiveness: { ...evaluationMetricSchema, description: "Evaluation of the project's Effectiveness." },
         efficiency: { ...evaluationMetricSchema, description: "Evaluation of the project's Efficiency." },
         impact: { ...evaluationMetricSchema, description: "Evaluation of the project's potential Impact." },
-    },
-    required: ["overallScore", "summary", "relevance", "coherence", "effectiveness", "efficiency", "impact"]
+          sustainability: { ...evaluationMetricSchema, description: "Evaluation of the project's Sustainability (Viabilité)." }
+        },
+        required: ["overallScore", "summary", "relevance", "coherence", "effectiveness", "efficiency", "impact", "sustainability"]
+
 };
 
 // The main function that handles requests
